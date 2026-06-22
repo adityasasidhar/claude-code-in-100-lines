@@ -77,13 +77,6 @@ LLM> [calls bash: ls -la]
 LLM> The current directory contains: main.py, llm.py, tools.py, requirements.txt ...
 ```
 
-## Adding a tool
-
-1. Write the function in `tools.py` — return a string, with a Google-style docstring (the `Args:` block becomes the parameter schema).
-2. Add it to `TOOLS` (name → function).
-
-That's it. Ollama derives the tool schema from the function signature + docstring, so there's no JSON to hand-write.
-
 ## Skills
 
 Skills are on-demand playbooks in `src/prompts/skills/` — detailed instructions the model reads *only when a task needs them*, instead of carrying every skill's text in context on every turn (progressive disclosure). The layout follows the [Agent Skills](https://github.com/anthropics/skills) spec: one folder per skill, each with a `SKILL.md`.
@@ -98,11 +91,3 @@ At startup `loader.py` scans `src/prompts/skills/*/SKILL.md` and injects a one-l
 | `writing-plans`           | [obra/superpowers](https://github.com/obra/superpowers) (MIT) |
 | `code-review`             | bundled                                  |
 | `git-commit`              | bundled                                  |
-
-## Adding a skill
-
-1. Create a folder `src/prompts/skills/<name>/` with a `SKILL.md` inside.
-2. Put a `description:` line near the top (YAML frontmatter works) — that line becomes its index entry.
-3. Write the instructions below it; add supporting files in the same folder if needed.
-
-Drop in the folder and the harness picks it up automatically — same as adding a tool.
