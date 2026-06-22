@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" width="900" height="440" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6e7681"/>
+    </marker>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- backdrop -->
+  <rect x="0" y="0" width="900" height="440" rx="16" fill="#0d1117"/>
+  <text x="32" y="34" fill="#8b949e" font-size="13" letter-spacing="2">THE AGENT LOOP</text>
+
+  <!-- ===== edges ===== -->
+  <g stroke="#3d444d" stroke-width="2" fill="none" marker-end="url(#arrow)">
+    <path d="M156,190 H232"/>                                   <!-- user -> llm -->
+    <path d="M364,190 H490"/>                                   <!-- llm -> exec -->
+    <path d="M634,190 H724"/>                                   <!-- exec -> result -->
+    <path d="M786,216 C786,258 300,258 300,228"/>              <!-- result -> llm (feedback) -->
+    <path d="M300,154 V88"/>                                    <!-- llm -> done -->
+    <path d="M562,216 V300"/>                                   <!-- exec -> subagent -->
+    <path d="M700,300 C772,282 814,250 802,218"/>              <!-- subagent -> result -->
+  </g>
+
+  <!-- edge labels -->
+  <g fill="#8b949e" font-size="12.5">
+    <text x="427" y="180" text-anchor="middle">tool call(s)</text>
+    <text x="679" y="180" text-anchor="middle">bash / timer</text>
+    <text x="543" y="252" text-anchor="middle">feed result back</text>
+    <text x="312" y="124" text-anchor="start">text reply</text>
+    <text x="574" y="262" text-anchor="start">subagent</text>
+    <text x="820" y="284" text-anchor="end" fill="#b69cf0">final message</text>
+  </g>
+
+  <!-- ===== nodes ===== -->
+  <!-- user -->
+  <g>
+    <rect x="44" y="164" width="112" height="52" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <text x="100" y="195" text-anchor="middle" fill="#c9d1d9" font-size="15">User input</text>
+  </g>
+
+  <!-- LLM hub -->
+  <g>
+    <rect x="236" y="154" width="128" height="72" rx="12" fill="#132235" stroke="#1f6feb" stroke-width="1.8"/>
+    <text x="300" y="187" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="700">LLM</text>
+    <text x="300" y="208" text-anchor="middle" fill="#7d8db0" font-size="11.5">sees tool schemas</text>
+  </g>
+
+  <!-- done -->
+  <g>
+    <rect x="236" y="42" width="128" height="46" rx="10" fill="#0f2417" stroke="#238636" stroke-width="1.6"/>
+    <text x="300" y="70" text-anchor="middle" fill="#56d364" font-size="14">print &amp; done</text>
+  </g>
+
+  <!-- execute tool -->
+  <g>
+    <rect x="490" y="164" width="144" height="52" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <text x="562" y="195" text-anchor="middle" fill="#c9d1d9" font-size="15">execute tool</text>
+  </g>
+
+  <!-- result -->
+  <g>
+    <rect x="724" y="164" width="124" height="52" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <text x="786" y="195" text-anchor="middle" fill="#c9d1d9" font-size="15">result</text>
+  </g>
+
+  <!-- subagent box (pulses) -->
+  <g>
+    <rect x="412" y="300" width="320" height="116" rx="12" fill="#17122b" stroke="#8957e5" stroke-width="1.6" stroke-dasharray="6 4">
+      <animate attributeName="stroke" values="#6e40c9;#c4a7ff;#6e40c9" dur="2.6s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-width" values="1.4;2.6;1.4" dur="2.6s" repeatCount="indefinite"/>
+    </rect>
+    <text x="572" y="328" text-anchor="middle" fill="#d2c4f7" font-size="14" font-weight="600">subagent — fresh LLM</text>
+    <text x="572" y="349" text-anchor="middle" fill="#8b7bb0" font-size="11.5">own history · no subagent tool · cannot nest</text>
+    <!-- mini nested loop -->
+    <g stroke="#5a4a86" stroke-width="1.4" fill="none" marker-end="url(#arrow)">
+      <path d="M472,386 H556"/>
+      <path d="M636,386 H684"/>
+      <path d="M684,398 C684,410 472,410 472,398"/>
+    </g>
+    <text x="456" y="390" text-anchor="middle" fill="#a99bd0" font-size="11">LLM</text>
+    <text x="596" y="390" text-anchor="middle" fill="#a99bd0" font-size="11">tool</text>
+    <text x="710" y="390" text-anchor="middle" fill="#a99bd0" font-size="11">reply</text>
+  </g>
+
+  <!-- ===== moving tokens ===== -->
+  <!-- primary: circulates LLM -> exec -> result -> back to LLM -->
+  <circle r="5.5" fill="#58a6ff" filter="url(#glow)">
+    <animateMotion dur="3.8s" repeatCount="indefinite" calcMode="linear"
+      path="M300,190 H786 C786,251 300,251 300,190"/>
+  </circle>
+
+  <!-- secondary: occasionally dives into the subagent and returns -->
+  <circle r="5" fill="#c4a7ff" filter="url(#glow)">
+    <animateMotion dur="5.2s" repeatCount="indefinite" calcMode="linear"
+      keyPoints="0;0.25;0.5;0.78;1" keyTimes="0;0.18;0.5;0.74;1"
+      path="M562,216 V346 H690 C766,318 812,252 800,200"/>
+  </circle>
+</svg>

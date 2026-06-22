@@ -1,12 +1,25 @@
-## claude-code-in-100-lines
+# claude-code-in-100-lines
 
 ### "Less is more"
 
-A minimal agentic loop in under 100 lines of Python. No frameworks, no abstractions.
+> **Every agent framework hides the loop or makes it too complex. This one shows it to you — in 96 lines of Python.**
+<p align="center">
+  <img src="assets/loop.svg" alt="The agent loop, animated: a token circulates User to LLM to execute tool to result and back to the LLM, with a subagent spawning a fresh nested loop." width="780">
+</p>
 
+
+## What you'll learn
+
+Read the source and you'll understand, concretely:
+
+- **The agent loop** — how an LLM "uses tools": the input → model → tool-call → feed-result-back cycle that every framework wraps and hides (`llm.py`).
+- **Tool dispatch** — how the model picks a tool and the harness runs it, with schemas auto-derived from plain Python docstrings, no JSON to maintain (`tools.py`).
+- **Skills & progressive disclosure** — how to hand an agent deep, task-specific playbooks *without* paying for their tokens on every turn (`loader.py` + `prompts/skills/`).
+- **Subagents** — how an agent spawns a fresh, isolated agent for a sub-task, and why bounding recursion matters.
+
+If you've ever wanted to know what's *actually* happening inside Cursor, Claude Code, or an "autonomous agent," this is the whole thing with nothing hidden.
 
 ## How it works
-
 Most agent frameworks hide the loop. This one exposes it:
 
 ```text
@@ -86,7 +99,6 @@ ollama pull gemma4:31b-cloud
 
 Requires [Ollama](https://ollama.com) with a model that supports tool use. The default is `gemma4:31b-cloud`.
 
-
 ## Run
 
 Run from the repo root as a module (the code lives in the `src` package):
@@ -115,3 +127,6 @@ At startup `loader.py` scans `src/prompts/skills/*/SKILL.md` and injects a one-l
 | `writing-plans`           | [obra/superpowers](https://github.com/obra/superpowers) (MIT) |
 | `code-review`             | bundled                                  |
 | `git-commit`              | bundled                                  |
+
+
+> ⚠️ **Not affiliated with Anthropic.** This isn't Claude Code and it doesn't call any Anthropic API. It's a from-scratch reimplementation of *how agents like Claude Code work*, running on whatever model you point Ollama at. The name is a nod to the idea, not the product.
