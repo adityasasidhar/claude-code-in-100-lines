@@ -1,7 +1,6 @@
 import glob
 import os
 
-# Anchor everything to this file so paths work regardless of the launch CWD.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 AGENT_DIR = os.path.join(BASE_DIR, "prompts", "agent")
 SKILLS_DIR = os.path.join(BASE_DIR, "prompts", "skills")
