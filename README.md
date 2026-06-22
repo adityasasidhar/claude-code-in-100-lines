@@ -76,13 +76,16 @@ Tool schemas are **not** hand-written. Ollama derives them from each function's 
 pip install -r requirements.txt
 ```
 
-Requires [Ollama](https://ollama.com) with a model that supports tool use. The default is `gemma4:31b-cloud`; any tool-capable model works (e.g. `qwen2.5` or `llama3.1` running locally).
+Install ollama for linux or macos
 
-To change the model, pass it when constructing `LLM`. Only `system` and `tools` are required — schemas are auto-derived from the functions, so there's no `tool_schemas` argument:
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
 
-```python
-llm = LLM(system=SYSTEM_PROMPT, tools=TOOLS, model="qwen2.5")
+ollama pull gemma4:31b-cloud
 ```
+
+Requires [Ollama](https://ollama.com) with a model that supports tool use. The default is `gemma4:31b-cloud`.
+
 
 ## Run
 
@@ -112,9 +115,3 @@ At startup `loader.py` scans `src/prompts/skills/*/SKILL.md` and injects a one-l
 | `writing-plans`           | [obra/superpowers](https://github.com/obra/superpowers) (MIT) |
 | `code-review`             | bundled                                  |
 | `git-commit`              | bundled                                  |
-
-## Extending
-
-**Add a tool.** Write a function with a Google-style docstring — the summary line and `Args:` block become the tool's schema automatically — then add it to the `TOOLS` dict in `tools.py`. That's it; no JSON schema to write.
-
-**Add a skill.** Drop a folder containing a `SKILL.md` (with `name:` and `description:` frontmatter) into `src/prompts/skills/`. `loader.py` indexes it into the system prompt at startup, so the agent — and any subagent — can discover and `cat` it on demand.
