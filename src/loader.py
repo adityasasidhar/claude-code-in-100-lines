@@ -13,9 +13,14 @@ def read_prompt(name: str) -> str:
 
 
 def load_skills(skills_dir: str = SKILLS_DIR) -> str:
-    """One-line index of each skills/<name>/SKILL.md, with an absolute `cat` path
-    so the model can read it from any working directory. Adding a skill = dropping
-    in a folder."""
+    """Scan skills/ and return a one-line index for each skill.
+
+    Each line includes an absolute `cat` path so the model can read the full
+    skill from any working directory. Adding a skill = dropping in a folder.
+    """
+    # Progressive disclosure: inject only a one-line summary into the system
+    # prompt. The model reads a full skill with bash("cat <path>") only when
+    # the task needs it, so 6 skills cost the tokens of 6 lines, not 6 docs.
     index = []
     for path in sorted(glob.glob(os.path.join(skills_dir, "*", "SKILL.md"))):
         name = os.path.basename(os.path.dirname(path))
@@ -23,5 +28,5 @@ def load_skills(skills_dir: str = SKILLS_DIR) -> str:
             (line.split(":", 1)[1].strip() for line in open(path) if line.startswith("description:")),
             "",
         )
-        index.append(f"- `{name}` — {description}\n      read with: `cat {path}`")
+        index.append(f"- `{name}`: {description}\n      read with: `cat {path}`")
     return "\n".join(index) or "(none)"

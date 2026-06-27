@@ -2,7 +2,7 @@
 
 ### "Less is more"
 
-> **Every agent framework hides the loop or makes it too complex. This one shows it to you — in 96 lines of Python.**
+> **Every agent framework hides the loop or makes it too complex. This one shows it to you — in ~110 lines of Python.**
 <p align="center">
   <img src="assets/loop.svg" alt="The agent loop, animated: a token circulates User to LLM to execute tool to result and back to the LLM, with a subagent spawning a fresh nested loop." width="780">
 </p>
@@ -16,8 +16,11 @@ Read the source and you'll understand, concretely:
 - **Tool dispatch** — how the model picks a tool and the harness runs it, with schemas auto-derived from plain Python docstrings, no JSON to maintain (`tools.py`).
 - **Skills & progressive disclosure** — how to hand an agent deep, task-specific playbooks *without* paying for their tokens on every turn (`loader.py` + `prompts/skills/`).
 - **Subagents** — how an agent spawns a fresh, isolated agent for a sub-task, and why bounding recursion matters.
+- **Memory** — how an agent keeps a fact across sessions: a `.agent/` directory it writes to itself, surfaced to the model as just a path it reads on demand — same progressive-disclosure trick as skills, nothing loaded by default (`memory.py`).
 
 If you've ever wanted to know what's *actually* happening inside Cursor, Claude Code, or an "autonomous agent," this is the whole thing with nothing hidden.
+
+Useful link: https://walkinglabs.github.io/learn-harness-engineering/en/
 
 ## How it works
 Most agent frameworks hide the loop. This one exposes it:
@@ -59,6 +62,7 @@ src/
   llm.py         # LLM class — message history + the tool-call loop
   tools.py       # Tool implementations: bash, timer, subagent
   loader.py      # Loads prompts and builds the skills index
+  memory.py      # Creates .agent/ and loads the MEMORY.md index into context
   prompts/
     agent/       # system_prompt.md, subagent_prompt.md
     skills/      # one folder per skill, each with a SKILL.md
@@ -85,33 +89,63 @@ Tool schemas are **not** hand-written. Ollama derives them from each function's 
 
 ## Setup
 
+### 1. Install Ollama
+
+| Platform | Command |
+|----------|---------|
+| macOS / Linux | `curl -fsSL https://ollama.com/install.sh \| sh` |
+| Windows | Download from [ollama.com/download](https://ollama.com/download) |
+
+Then pull the default model (requires tool-use support):
+```bash
+ollama pull gemma4:31b-cloud
+```
+
+### 2. Install Python dependencies
+
+**Option A — uv (recommended, identical on Windows / macOS / Linux)**
+
+Install uv:
+
+| Platform | Command |
+|----------|---------|
+| macOS / Linux | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| Windows (PowerShell) | `irm https://astral.sh/uv/install.ps1 \| iex` |
+| Windows (winget) | `winget install astral-sh.uv` |
+
+Then:
+```bash
+uv sync
+```
+
+**Option B — pip**
 ```bash
 pip install -r requirements.txt
 ```
 
-Install ollama for linux or macos
-
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-
-ollama pull gemma4:31b-cloud
-```
-
-Requires [Ollama](https://ollama.com) with a model that supports tool use. The default is `gemma4:31b-cloud`.
-
 ## Run
 
-Run from the repo root as a module (the code lives in the `src` package):
+**With uv**
+```bash
+uv run python -m src.main
+```
+or via the package entry point:
+```bash
+uv run harness
+```
 
+**With pip**
 ```bash
 python -m src.main
 ```
 
 ```text
 You> what files are in the current directory?
-LLM> [calls bash: ls -la]
-LLM> The current directory contains: main.py, llm.py, tools.py, requirements.txt ...
+  ↳ bash({'command': 'ls'}) -> LICENSE  README.md  requirements.txt  src
+LLM> The current directory contains: LICENSE, README.md, requirements.txt, and src/.
 ```
+
+Every tool call is printed as it happens — `↳ name(args) -> result` — so you watch the loop turn instead of only seeing the final answer.
 
 ## Skills
 
@@ -128,5 +162,20 @@ At startup `loader.py` scans `src/prompts/skills/*/SKILL.md` and injects a one-l
 | `code-review`             | bundled                                  |
 | `git-commit`              | bundled                                  |
 
+
+## Memory
+
+The agent has a long-term memory that outlives a single session. On startup `memory.py` creates a `.agent/` directory **in whatever directory you run the harness from**, so each project the agent touches keeps its own memory:
+
+```text
+.agent/
+  MEMORY.md        # the index — one line per memory; read on demand, not injected
+  memory/
+    <slug>.md      # one fact per file, with frontmatter; read on demand
+```
+
+Memory works **exactly like skills**: nothing is loaded into context by default. The system prompt is injected only with the *path* to `MEMORY.md`, and the agent `cat`s the index when it judges a past memory might be relevant — then `cat`s the one memory file whose index line matches. So a hundred memories cost nothing per turn until they're actually needed.
+
+The agent writes its own memories. The system prompt teaches it the format (a kebab-case `name`, a `description` used for recall, and a `type` — `user` / `feedback` / `project` / `reference`) and when to bother: durable things like a stable user preference or a non-obvious project constraint, never what the repo already records. It writes a memory by `cat`-ing a file into `.agent/memory/` and appending one index line to `.agent/MEMORY.md` — plain `bash`, no new tool. `.agent/` is gitignored, so the demo never dirties the repo.
 
 > ⚠️ **Not affiliated with Anthropic.** This isn't Claude Code and it doesn't call any Anthropic API. It's a from-scratch reimplementation of *how agents like Claude Code work*, running on whatever model you point Ollama at. The name is a nod to the idea, not the product.
